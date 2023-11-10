@@ -49,3 +49,7 @@ export const Switcher = styled.span`
     color: #1d9bf8;
   }
 `;
+
+export const LostCode = styled.button`
+  margin-top: 10px;
+`;

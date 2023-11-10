@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { auth } from "../firebase";
 import {
   Error,
   Form,
   Input,
+  LostCode,
   Switcher,
   Title,
   Wrapper,
@@ -47,6 +51,17 @@ export default function CreateAccount() {
     }
     console.log(email, password);
   };
+
+  const onClick = async () => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      console.log("message!");
+    } catch (e) {
+      if (e instanceof FirebaseError) {
+        setError(e.message);
+      }
+    }
+  };
   return (
     <Wrapper>
       <Title>Log into Ⅹ</Title>
@@ -74,6 +89,7 @@ export default function CreateAccount() {
         Don't have an account?{" "}
         <Link to="/create-account">Create one &rarr;</Link>
       </Switcher>
+      <LostCode onClick={onClick}>Forgot Password ㅠㅠ</LostCode>
       <GithubButton />
     </Wrapper>
   );
