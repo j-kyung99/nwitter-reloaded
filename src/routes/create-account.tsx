@@ -1,4 +1,8 @@
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
+} from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,6 +11,7 @@ import {
   Error,
   Form,
   Input,
+  LostCode,
   Switcher,
   Title,
   Wrapper,
@@ -61,6 +66,16 @@ export default function CreateAccount() {
     }
     console.log(name, email, password);
   };
+  const onClick = async () => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      console.log("message!");
+    } catch (e) {
+      if (e instanceof FirebaseError) {
+        setError(e.message);
+      }
+    }
+  };
   return (
     <Wrapper>
       <Title>Join Ⅹ</Title>
@@ -98,6 +113,7 @@ export default function CreateAccount() {
       <Switcher>
         Already have an account? <Link to="/login">Log in &rarr;</Link>
       </Switcher>
+      <LostCode onClick={onClick}>Forgot Password ㅠㅠ</LostCode>
       <GithubButton />
     </Wrapper>
   );

@@ -52,4 +52,9 @@ export const Switcher = styled.span`
 
 export const LostCode = styled.button`
   margin-top: 10px;
+  font-size: 16px;
+  border: none;
+  background-color: black;
+  color: #1d9bf8;
+  cursor: pointer;
 `;
