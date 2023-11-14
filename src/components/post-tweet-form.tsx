@@ -94,10 +94,7 @@ export default function PostTweetForm() {
         userId: user.uid,
       });
       if (file) {
-        const locationRef = ref(
-          storage,
-          `tweets/${user.uid}-${user.displayName}/${doc.id}`
-        );
+        const locationRef = ref(storage, `tweets/${user.uid}/${doc.id}`);
         // tweets폴더 안에 user의 uniqueId - user의 Id폴더 안에 doc id에 저장
         const result = await uploadBytes(locationRef, file);
         const url = await getDownloadURL(result.ref);
