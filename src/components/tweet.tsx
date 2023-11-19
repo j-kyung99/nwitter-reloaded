@@ -1,8 +1,9 @@
 import styled from "styled-components";
 import { ITweet } from "./timeline";
 import { auth, db, storage } from "../firebase";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { deleteObject, ref } from "firebase/storage";
+import { useState } from "react";
 
 const Wrapper = styled.div`
   display: grid;
@@ -37,12 +38,76 @@ const DeleteButton = styled.button`
   border: 0;
   font-size: 12px;
   padding: 5px 10px;
+  margin-left: 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const EditButton = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const TextArea = styled.textarea`
+  border: 2px solid white;
+  padding: 20px;
+  margin: 10px 0px;
+  border-radius: 12px;
+  font-size: 16px;
+  color: white;
+  background-color: black;
+  width: 100%;
+  resize: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  &::placeholder {
+    font-size: 16px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+      sans-serif;
+  }
+  &:focus {
+    outline: none;
+    border-color: #1d9bf9;
+  }
+`;
+
+const SaveButton = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const CancelButton = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  font-size: 12px;
+  padding: 5px 10px;
+  margin-left: 10px;
   text-transform: uppercase;
   border-radius: 5px;
   cursor: pointer;
 `;
 
 export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTweet, setEditTweet] = useState(tweet);
   const user = auth.currentUser;
   const onDelete = async () => {
     const ok = confirm("Are you sure you want to delete this tweet?");
@@ -59,14 +124,57 @@ export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
       //
     }
   };
+
+  const onEdit = () => {
+    setIsEditing(true);
+  };
+
+  const onSaveEdit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user || tweet === "" || tweet.length > 180) return;
+    try {
+      await updateDoc(doc(db, "tweets", id), {
+        tweet: editTweet,
+      });
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const onCancelEdit = () => {
+    setIsEditing(false);
+    setEditTweet(tweet);
+  };
+
   return (
     <Wrapper>
       <Column>
         <Username>{username}</Username>
-        <Payload>{tweet}</Payload>
-        {user?.uid === userId ? (
-          <DeleteButton onClick={onDelete}>Delete</DeleteButton>
-        ) : null}
+        {isEditing ? (
+          <>
+            <TextArea
+              required
+              maxLength={180}
+              value={editTweet}
+              onChange={(e) => setEditTweet(e.target.value)}
+            />
+            <SaveButton onClick={onSaveEdit}>Save</SaveButton>
+            <CancelButton onClick={onCancelEdit}>Cancel</CancelButton>
+          </>
+        ) : (
+          <>
+            <Payload>{tweet}</Payload>
+            {user?.uid === userId ? (
+              <>
+                <EditButton onClick={onEdit}>Edit</EditButton>
+                <DeleteButton onClick={onDelete}>Delete</DeleteButton>
+              </>
+            ) : null}
+          </>
+        )}
       </Column>
       <Column>{photo ? <Photo src={photo}></Photo> : null}</Column>
     </Wrapper>
