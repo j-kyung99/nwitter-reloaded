@@ -2,12 +2,17 @@ import styled from "styled-components";
 import { ITweet } from "./timeline";
 import { auth, db, storage } from "../firebase";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { deleteObject, ref } from "firebase/storage";
-import { useState } from "react";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
+import React, { useState } from "react";
 
 const Wrapper = styled.div`
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 5fr 1fr;
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 15px;
@@ -80,6 +85,22 @@ const TextArea = styled.textarea`
   }
 `;
 
+const AttachFileButton = styled.label`
+  padding: 5px 10px;
+  color: #1d9bf9;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid #1d9bf9;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+`;
+
+const AttachFileInput = styled.input`
+  display: none;
+`;
+
 const SaveButton = styled.button`
   background-color: white;
   color: black;
@@ -108,6 +129,7 @@ const CancelButton = styled.button`
 export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTweet, setEditTweet] = useState(tweet);
+  const [editFile, setEditFile] = useState<File | null>(null);
   const user = auth.currentUser;
   const onDelete = async () => {
     const ok = confirm("Are you sure you want to delete this tweet?");
@@ -137,16 +159,36 @@ export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
       await updateDoc(doc(db, "tweets", id), {
         tweet: editTweet,
       });
+      if (editFile) {
+        const locationRef = ref(storage, `tweets/${user.uid}/${id}`);
+        const result = await uploadBytes(locationRef, editFile);
+        const url = await getDownloadURL(result.ref);
+        await updateDoc(doc(db, "tweets", id), {
+          photo: url,
+        });
+      }
     } catch (e) {
       console.log(e);
     } finally {
       setIsEditing(false);
+      setEditFile(null);
     }
   };
 
   const onCancelEdit = () => {
     setIsEditing(false);
     setEditTweet(tweet);
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { files } = e.target;
+    if (files && files.length === 1) {
+      if (files[0].size > 1024 * 1024) {
+        alert("Too big size!");
+        return;
+      }
+      setEditFile(files[0]);
+    }
   };
 
   return (
@@ -163,6 +205,15 @@ export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
             />
             <SaveButton onClick={onSaveEdit}>Save</SaveButton>
             <CancelButton onClick={onCancelEdit}>Cancel</CancelButton>
+            <AttachFileButton htmlFor="EditFile">
+              {editFile ? "Photo Added ✅" : "Add photo"}
+            </AttachFileButton>
+            <AttachFileInput
+              onChange={onFileChange}
+              type="file"
+              id="EditFile"
+              accept="image/*"
+            />
           </>
         ) : (
           <>
