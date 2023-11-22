@@ -40,19 +40,74 @@ const AvatarImg = styled.img`
 const AvatarInput = styled.input`
   display: none;
 `;
-const Name = styled.span`
-  font-size: 22px;
+const Name = styled.div`
+  display: flex;
+  align-items: center;
+`;
+const DisplayName = styled.span`
+  font-size: 20px;
+`;
+const ChangeNameBtn = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  margin-left: 7px;
+  font-size: 14px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  cursor: pointer;
 `;
 const Tweets = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
 `;
+const Form = styled.form`
+  display: flex;
+  align-items: center;
+`;
+const Input = styled.input`
+  background: none;
+  resize: none;
+  color: white;
+  margin-right: 10px;
+  font-size: 14px;
+  border: 2px solid white;
+  border-radius: 5px;
+  padding: 5px;
+`;
+const SaveButton = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  font-size: 14px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const CancelButton = styled.button`
+  background-color: white;
+  color: black;
+  font-weight: 600;
+  border: 0;
+  font-size: 14px;
+  padding: 5px 10px;
+  margin-left: 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
 
 export default function Profile() {
   const user = auth.currentUser;
   const [avatar, setAvatar] = useState(user?.photoURL);
   const [tweets, setTweets] = useState<ITweet[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.displayName ?? "Anonymous");
   const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target;
     if (!user) return;
@@ -91,6 +146,28 @@ export default function Profile() {
   useEffect(() => {
     fetchTweets();
   }, []);
+  const onEdit = () => {
+    setIsEditing(true);
+  };
+  const onEditName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditName(e.target.value);
+  };
+  const onCancelEdit = () => {
+    setIsEditing(false);
+  };
+  const onSaveName = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      await updateProfile(user, {
+        displayName: editName,
+      });
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsEditing(false);
+    }
+  };
   return (
     <Wrapper>
       <AvatarUpload htmlFor="avatar">
@@ -117,7 +194,18 @@ export default function Profile() {
         type="file"
         accept="image/*"
       />
-      <Name>{user?.displayName ?? "Anonymous"}</Name>
+      {isEditing ? (
+        <Form onSubmit={onSaveName}>
+          <Input type="text" onChange={onEditName} value={editName} />
+          <SaveButton>저장</SaveButton>
+          <CancelButton onClick={onCancelEdit}>취소</CancelButton>
+        </Form>
+      ) : (
+        <Name>
+          <DisplayName>{user?.displayName ?? "Anonymous"}</DisplayName>
+          <ChangeNameBtn onClick={onEdit}>변경</ChangeNameBtn>
+        </Name>
+      )}
       <Tweets>
         {tweets.map((tweet) => (
           <Tweet key={tweet.id} {...tweet} />
