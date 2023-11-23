@@ -55,7 +55,7 @@ export default function CreateAccount() {
   const onClick = async () => {
     try {
       await sendPasswordResetEmail(auth, email);
-      console.log("message!");
+      alert("메일을 확인해주세요!");
     } catch (e) {
       if (e instanceof FirebaseError) {
         setError(e.message);
