@@ -62,6 +62,7 @@ const Tweets = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
 `;
 const Form = styled.form`
   display: flex;
